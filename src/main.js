@@ -3,13 +3,14 @@
 fileContent = '';
 fileName = '';
 outputContent ='';
+keyContent = '';
 
 function checkKey() {
   document.getElementById('alertbar').innerHTML="";
   key = d3.select('#key').property('value');
 
   //check for length
-  keylen = 5;
+  keylen = 16;
   if (key.length > keylen) {
     alertbar = d3.select('#alertbar');
     alertblock = alertbar.append('div');
@@ -22,7 +23,7 @@ function checkKey() {
     alertblock.append('h4')
               .text('提示！');
     alertblock.append('p')
-              .text('密钥过长，超过64位，请重新输入！');
+              .text('密钥过长，超过16位，请重新输入！');
 
     return false;
   }
@@ -38,14 +39,21 @@ function checkKey() {
     alertblock.append('h4')
               .text('提示！');
     alertblock.append('p')
-              .text('密钥过短，少于64位，请重新输入！');
+              .text('密钥过短，少于16位，请重新输入！');
+
     return false;
   }
 
+  function invalid(ch) {
+    if ('0' <= ch && ch <= '9') return false;
+    if ('a' <= ch && ch <='z') return false;
+    if ('A' <= ch && ch <='Z') return false;
+    return true;
+  }
 
-  //check for 0/1
+  //check for valid character
   for (var i = 0; i < keylen; i++) {
-    if ((key[i] != '0') && (key[i] != '1')){
+    if (invalid(key[i])) {
       alertbar = d3.select('#alertbar');
       alertblock = alertbar.append('div');
       alertblock.attr('class', 'alert alert-danger');
@@ -63,6 +71,8 @@ function checkKey() {
   }
 
   d3.select('#key').attr('disabled','');
+
+  keyContent = key;
   return true;
 }
 
@@ -72,7 +82,14 @@ function checkFile() {
     var pos = filename.lastIndexOf(".");
     var lastname = filename.substring(pos,filename.length);  //此处文件后缀名也可用数组方式获得str.split(".")
 
-    if (lastname.toLowerCase()!=".txt") {
+    function fileInvalid(str) {
+      len = str.length;
+      if (len != 64) return true;
+      for (var i = 0; i < len; i++)
+        if ((str[i] != '0') && (str[i] != 1)) return true;
+      return false;
+    }
+    if ((lastname.toLowerCase()!=".txt") || fileInvalid(fileContent)) {
       alertbar = d3.select('#alertbar');
       alertblock = alertbar.append('div');
       alertblock.attr('class', 'alert alert-danger');
@@ -164,16 +181,34 @@ function saveFile() {
   doSave(outputContent, "text", fileName + '_output.txt');
 }
 
-function Work(encode, input) {
+function Work(encode) {
   valid = checkKey() & checkFile();
 
-  if (!valid) return true;
-  console.log(fileContent);
-  console.log(fileName);
-  outputContent = fileContent;
+  if (!valid) return ;
+  //console.log(fileContent);
+  //console.log(fileName);
 
-  //outputContent = DES(fileContent, encode)
-  saveFile();
+  //outputContent = fileContent;
+  console.log(keyContent);
+
+  outputContent = DES(fileContent, keyContent, encode);
+
+  alertbar = d3.select('#alertbar');
+  alertblock = alertbar.append('div');
+  alertblock.attr('class', 'alert alert-success');
+  alertblock.append('button')
+            .attr('type', 'button')
+            .attr('class', 'close')
+            .attr('data-dismiss', 'alert')
+            .text('×');
+  alertblock.append('h4')
+            .text('提示！');
+  alertblock.append('p')
+            .text('加密成功！');
+
+  d3.select('#output').classed('hidden', false);
+  d3.select('#result').text(outputContent);
+//  saveFile();
 
 
 }

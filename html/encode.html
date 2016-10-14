@@ -13,6 +13,7 @@
 
     <script src="../src/d3.min.js"></script>
     <script src="../src/DES.js"></script>
+    <script src="../src/main.js"></script>
 
 </head>
 
@@ -59,7 +60,7 @@
 						DES加密
 					</h2>
                         <h4>
-						<span>使用64位明文和64位密钥做为输入，产生64位的密文做为输出。加解密使用相同的密钥。</span>
+						<span>使用64位明文和64位(16位十六进制)密钥做为输入，产生64位的密文做为输出。加解密使用相同的密钥。</span>
 					</h4>
                         <div id='alertbar'>
                         </div>
@@ -69,7 +70,7 @@
                                 <legend></legend>
                                 <div>
                                     <label>密钥：</label>
-                                    <input id="key" class="input-large" type="text" placeholder="64位密钥（01字符串）">
+                                    <input id="key" class="input-large" type="text" placeholder="16位十六进制">
                                     <button type="button" class="btn btn-default btn-xs" onclick="checkKey()"> 确认</button>
                                     <span class="help-block">填写完后请点击确认，确认后不能再次更改密钥</span>
                                 </div>
@@ -83,7 +84,8 @@
                                 </div>
 
                                 <button type="button" class="btn btn-primary" onclick="Work(true)">开始加密</button>
-                                <div class = 'bg-info hidden'>
+
+                                <div class = 'bg-info hidden' id = 'output'>
                                   <h4>密文</h4>
                                   <p id = "result"><p>
                                   <button type = "button" class = "btn btn-default btn-xs" onclick = saveFile()>下载密文</button>
