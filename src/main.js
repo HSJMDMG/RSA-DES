@@ -243,6 +243,8 @@ function Work() {
             .text('解密成功！');
   }
 
+  //d3.select('#key').attr('disabled',false);
+  $("#key").removeAttr("disabled");
   d3.select('#output').classed('hidden', false);
   d3.select('#result').text(outputContent);
   //  saveFile();
