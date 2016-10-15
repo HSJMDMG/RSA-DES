@@ -2,9 +2,12 @@
 
 <head>
     <meta charset="utf-8">
-    <!-- 新 Bootstrap 核心 CSS 文件 -->
-    <link rel="stylesheet" href="http://cdn.bootcss.com/bootstrap/3.3.0/css/bootstrap.min.css">
 
+    <!--
+    <link rel="stylesheet" href="http://cdn.bootcss.com/bootstrap/3.3.0/css/bootstrap.min.css">
+    -->
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/common.css">
     <!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
     <script src="http://cdn.bootcss.com/jquery/1.11.1/jquery.min.js"></script>
 
@@ -38,12 +41,8 @@
                             <li class="divider">
                             </li>
                             <li class="active bg-info">
-                                <a href="#">加密</a>
+                                <a href="#">加解密</a>
                             </li>
-                            <li>
-                                <a href="#">解密</a>
-                            </li>
-
                             <li class="divider">
                             </li>
                             <li>
@@ -58,10 +57,10 @@
 
                     <div class="col-md-9">
                         <h2>
-						DES加密
+						DES加解密
 					</h2>
                         <h4>
-						<span>使用64位明文和64位(16位十六进制)密钥做为输入，产生64位的密文做为输出。加解密使用相同的密钥。</span>
+						<span>使用64位明文（密文）和64位（16位十六进制）密钥做为输入，产生64位的密文（明文）做为输出。加解密使用相同的密钥。</span>
 					</h4>
                         <div id='alertbar'>
                         </div>
@@ -69,6 +68,18 @@
                         <form class="form-horizontal">
                             <fieldset>
                                 <legend></legend>
+                                <div>
+                                    <label class="radio-inline">
+                                        <input type="radio" name="inlineRadioOptions" id="radio1" value="encode" checked> 加密
+                                    </label>
+                                    <label class="radio-inline">
+                                        <input type="radio" name="inlineRadioOptions" id="radio2" value="decode"> 解密
+                                    </label>
+                                </div>
+
+
+
+
                                 <div>
                                     <label>密钥：</label>
                                     <input id="key" class="input-large" type="text" placeholder="16位十六进制">
@@ -78,18 +89,19 @@
 
 
                                 <div>
-                                    <lable>明文：</label>
-                                        <input id="inputFile" type="file" onchange="upload(this)"/>
-                                        <span class="help-block">选择明文(内容为二进制的.txt文件)</span>
-                                        <span id = "fileInfo"></span>
+                                    <lable id = 'label1'>输入：</label>
+                                        <input id="inputFile" type="file" onchange="upload(this)" />
+                                        <span class="help-block">选择内容为二进制的.txt文件</span>
+                                        <span id="fileInfo"></span>
                                 </div>
 
-                                <button type="button" class="btn btn-primary" onclick="Work(true)">开始加密</button>
+                                <button id = "buttonStart"type="button" class="btn btn-primary" onclick="Work()">开始</button>
 
-                                <div class = 'bg-info hidden' id = 'output'>
-                                  <h4>密文</h4>
-                                  <p id = "result"><p>
-                                  <button type = "button" class = "btn btn-default btn-xs" onclick = saveFile()>下载密文</button>
+                                <div class='bg-info hidden' id='output'>
+                                    <h4 id = 'label2'>密文</h4>
+                                    <p id="result"></p>
+                                    <br>
+                                    <button type="button" class="btn btn-default btn-xs" onclick=saveFile()>下载结果</button>
                                 </div>
                             </fieldset>
 

@@ -1,9 +1,3 @@
-
-// special value stored in x[0] to indicate a problem
-var ERROR_VAL = -9876;
-
-// initial permutation (split into left/right halves )
-// since DES numbers bits starting at 1, we will ignore x[0]
 var IP_perm = new Array(-1,
     58, 50, 42, 34, 26, 18, 10, 2,
     60, 52, 44, 36, 28, 20, 12, 4,
@@ -14,7 +8,7 @@ var IP_perm = new Array(-1,
     61, 53, 45, 37, 29, 21, 13, 5,
     63, 55, 47, 39, 31, 23, 15, 7);
 
-// final permutation (inverse initial permutation)
+// IP ^ (-1)
 var FP_perm = new Array(-1,
     40, 8, 48, 16, 56, 24, 64, 32,
     39, 7, 47, 15, 55, 23, 63, 31,
@@ -43,7 +37,7 @@ var P_perm = new Array(-1,
     2, 8, 24, 14, 32, 27, 3, 9,
     19, 13, 30, 6, 22, 11, 4, 25);
 
-// note we do use element 0 in the S-Boxes
+// 8 S-Boxes
 var S1 = new Array(
     14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7,
     0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8,
@@ -85,7 +79,7 @@ var S8 = new Array(
     7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8,
     2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11);
 
-//, first, key, permutation
+//generate the subkey: permutation choice 1
 var PC_1_perm = new Array(-1,
     // C subkey bits
     57, 49, 41, 33, 25, 17, 9, 1, 58, 50, 42, 34, 26, 18,
@@ -94,110 +88,81 @@ var PC_1_perm = new Array(-1,
     63, 55, 47, 39, 31, 23, 15, 7, 62, 54, 46, 38, 30, 22,
     14, 6, 61, 53, 45, 37, 29, 21, 13, 5, 28, 20, 12, 4);
 
-//, per-round, key, selection, permutation
+//generate the subkey: permutation choice 2
 var PC_2_perm = new Array(-1,
     14, 17, 11, 24, 1, 5, 3, 28, 15, 6, 21, 10,
     23, 19, 12, 4, 26, 8, 16, 7, 27, 20, 13, 2,
     41, 52, 31, 37, 47, 55, 30, 40, 51, 45, 33, 48,
     44, 49, 39, 56, 34, 53, 46, 42, 50, 36, 29, 32);
 
-// save output in case we want to reformat it later
-var DES_output = new Array(65);
 
 
-// split an integer into bits
-// ary   = array to store bits in
-// start = starting subscript
-// bitc  = number of bits to convert
-// val   = number to convert
-function split_int(ary, start, bitc, val) {
-    var i = start;
-    var j;
-    for (j = bitc - 1; j >= 0; j--) {
-        // isolate low-order bit
-        ary[i + j] = val & 1;
-        // remove that bit
+function num_to_bits(a, start, bitnum, val) {
+    for (var j = bitnum - 1; j >= 0; j--) {
+        a[start + j] = val & 1;
         val >>= 1;
     }
 }
 
-
-// copy bits in a permutation
-//   dest = where to copy the bits to
-//   src  = Where to copy the bits from
-//   perm = The order to copy/permute the bits
-// note: since DES ingores x[0], we do also
-function permute(dest, src, perm) {
-    var i;
-    var fromloc;
-
-    for (i = 1; i < perm.length; i++) {
-        fromloc = perm[i];
-        dest[i] = src[fromloc];
-    }
+function do_permutation(dest, src, perm) {
+    for (var i = 1; i < perm.length; i++)
+        dest[i] = src[perm[i]];
 }
 
-// do an array XOR
-// assume all array entries are 0 or 1
-function xor(a1, a2) {
-    var i;
-
-    for (i = 1; i < a1.length; i++)
-        a1[i] = a1[i] ^ a2[i];
+function array_xor(a, b) {
+    for (var i = 1; i < a.length; i++)
+        a[i] ^= b[i];
 }
 
-// process one S-Box, return integer from S-Box
-function do_S(SBox, index, inbits) {
-    // collect the 6 bits into a single integer
+function do_one_Sbox(SBox, index, inbits) {
+
     var S_index = inbits[index] * 32 + inbits[index + 5] * 16 +
         inbits[index + 1] * 8 + inbits[index + 2] * 4 +
         inbits[index + 3] * 2 + inbits[index + 4];
 
-    // do lookup
     return SBox[S_index];
 }
 
-// do one round of DES encryption
-function des_round(L, R, KeyR) {
-    var E_result = new Array(49);
-    var S_out = new Array(33);
+// one round of DES
+function des_round(L, R, Kr) {
 
-    // copy the existing L bits, then set new L = old R
-    var temp_L = new Array(33);
+  var Sres = new Array(33);
+  var R_expend = new Array(49);
+    // L = old R, R = old L xor f(old R, K)
+    var tmpL = new Array(33);
     for (i = 0; i < 33; i++) {
-        // copy exising L bits
-        temp_L[i] = L[i];
-
-        // set L = R
+        tmpL[i] = L[i];
         L[i] = R[i];
     }
 
-    // expand R using E permutation
-    permute(E_result, R, E_perm);
 
-    // exclusive-or with current key
-    xor(E_result, KeyR);
+    //function f:
 
-    // put through the S-Boxes
-    split_int(S_out, 1, 4, do_S(S1, 1, E_result));
-    split_int(S_out, 5, 4, do_S(S2, 7, E_result));
-    split_int(S_out, 9, 4, do_S(S3, 13, E_result));
-    split_int(S_out, 13, 4, do_S(S4, 19, E_result));
-    split_int(S_out, 17, 4, do_S(S5, 25, E_result));
-    split_int(S_out, 21, 4, do_S(S6, 31, E_result));
-    split_int(S_out, 25, 4, do_S(S7, 37, E_result));
-    split_int(S_out, 29, 4, do_S(S8, 43, E_result));
+    // expand R
+    do_permutation(R_expend, R, E_perm);
 
-    // do the P permutation
-    permute(R, S_out, P_perm);
 
-    // xor this with old L to get the new R
-    xor(R, temp_L);
+    array_xor(R_expend, Kr);
+
+    // put into the S-Boxes
+    num_to_bits(Sres, 1, 4, do_one_Sbox(S1, 1, R_expend));
+    num_to_bits(Sres, 5, 4, do_one_Sbox(S2, 7, R_expend));
+    num_to_bits(Sres, 9, 4, do_one_Sbox(S3, 13, R_expend));
+    num_to_bits(Sres, 13, 4, do_one_Sbox(S4, 19, R_expend));
+    num_to_bits(Sres, 17, 4, do_one_Sbox(S5, 25, R_expend));
+    num_to_bits(Sres, 21, 4, do_one_Sbox(S6, 31, R_expend));
+    num_to_bits(Sres, 25, 4, do_one_Sbox(S7, 37, R_expend));
+    num_to_bits(Sres, 29, 4, do_one_Sbox(S8, 43, R_expend));
+
+
+    do_permutation(R, Sres, P_perm);
+
+    // get new R
+    array_xor(R, tmpL);
 
 }
 
-// shift the CD values left 1 bit
-function shift_CD_1(CD) {
+function lsh_CD_1(CD) {
     var i;
 
     // note we use [0] to hold the bit shifted around the end
@@ -210,8 +175,7 @@ function shift_CD_1(CD) {
     CD[28] = CD[0];
 }
 
-// shift the CD values left 2 bits
-function shift_CD_2(CD) {
+function lsh_CD_2(CD) {
     var i;
     var C1 = CD[1];
 
@@ -229,66 +193,55 @@ function shift_CD_2(CD) {
 
 
 // do the actual DES encryption/decryption
-function des_encrypt(inData, Key, do_encrypt) {
-    console.log(inData);
-    var tempData = new Array(65); // output bits
-    var CD = new Array(57); // halves of current key
-    var KS = new Array(16); // per-round key schedules
-    var L = new Array(33); // left half of current data
-    var R = new Array(33); // right half of current data
-    var result = new Array(65); // DES output
+function des_encrypt(data, Key, encode) {
+    //console.log(data);
+    var tempData = new Array(65);
+    var CD = new Array(57);
+    var SubKeys = new Array(16);
+    var L = new Array(33);
+    var R = new Array(33);
+    var result = new Array(65);
     var i;
 
-    // do the initial key permutation
-    permute(CD, Key, PC_1_perm);
+    // permutation choice 1
+    do_permutation(CD, Key, PC_1_perm);
 
     // create the subkeys
-    for (i = 1; i <= 16; i++) {
-        // create a new array for each round
-        KS[i] = new Array(49);
-
-        // how much should we shift C and D?
-        if (i == 1 || i == 2 || i == 9 || i == 16)
-            shift_CD_1(CD);
+    for (i = 1; i <= 6; i++) {
+        SubKeys[i] = new Array(49);
+        if (i == 1 || i == 2)
+            lsh_CD_1(CD);
         else
-            shift_CD_2(CD);
+            lsh_CD_2(CD);
 
-        // create the actual subkey
-        permute(KS[i], CD, PC_2_perm);
+        do_permutation(SubKeys[i], CD, PC_2_perm);
     }
 
-    // handle the initial permutation
-    permute(tempData, inData, IP_perm);
+    //IP
+    do_permutation(tempData, data, IP_perm);
 
-    // split data into L/R parts
+    // split data into L & R
     for (i = 1; i <= 32; i++) {
         L[i] = tempData[i];
         R[i] = tempData[i + 32];
     }
-    // encrypting or decrypting?
-    if (do_encrypt) {
-        // encrypting
-        for (i = 1; i <= 16; i++) {
-            des_round(L, R, KS[i]);
+
+    if (encode) {
+        for (i = 1; i <= 6; i++) {
+            des_round(L, R, SubKeys[i]);
         }
     } else {
-        // decrypting
-        for (i = 16; i >= 1; i--) {
-            des_round(L, R, KS[i]);
+        for (i = 6; i >= 1; i--) {
+            des_round(L, R, SubKeys[i]);
         }
     }
 
-    // create the 64-bit preoutput block = R16/L16
     for (i = 1; i <= 32; i++) {
-        // copy R bits into left half of block, L bits into right half
         tempData[i] = R[i];
         tempData[i + 32] = L[i];
     }
 
-    // do final permutation and return result
-    permute(result, tempData, FP_perm);
-    console.log(result);
+    //IP^-1
+    do_permutation(result, tempData, FP_perm);
     return result;
-
-
 }

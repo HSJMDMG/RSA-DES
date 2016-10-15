@@ -179,8 +179,21 @@ function saveFile() {
   doSave(outputContent, "text", fileName + '_output.txt');
 }
 
-function Work(encode) {
+function updateText(encode) {
+  if (encode) {
+    d3.select('#label2').text('密文');
+  }
+  else {
+    d3.select('#label2').text('明文');
+  }
+}
+
+
+
+function Work() {
   valid = checkKey() & checkFile();
+  encode = document.getElementById("radio1").checked;
+  updateText(encode);
 
   if (!valid) return ;
   //console.log(fileContent);
@@ -189,10 +202,30 @@ function Work(encode) {
   //outputContent = fileContent;
   console.log(keyContent);
 
-  outputContent = CBC_DES(fileContent, keyContent, encode);
-
   alertbar = d3.select('#alertbar');
   alertblock = alertbar.append('div');
+
+  if ((!encode) && (fileContent.length % 64 !== 0)) {
+
+    alertblock.attr('class', 'alert alert-danger');
+    alertblock.append('button')
+              .attr('type', 'button')
+              .attr('class', 'close')
+              .attr('data-dismiss', 'alert')
+              .text('×');
+    alertblock.append('h4')
+              .text('提示！');
+    alertblock.append('p')
+              .text('解密失败！请检查密文长度！');
+
+
+    return;
+
+  }
+
+  outputContent = CBC_DES(fileContent, keyContent, encode);
+
+
   alertblock.attr('class', 'alert alert-success');
   alertblock.append('button')
             .attr('type', 'button')
@@ -201,12 +234,18 @@ function Work(encode) {
             .text('×');
   alertblock.append('h4')
             .text('提示！');
-  alertblock.append('p')
+  if (encode) {
+    alertblock.append('p')
             .text('加密成功！');
+  }
+  else {
+    alertblock.append('p')
+            .text('解密成功！');
+  }
 
   d3.select('#output').classed('hidden', false);
   d3.select('#result').text(outputContent);
-//  saveFile();
+  //  saveFile();
 
 
 }

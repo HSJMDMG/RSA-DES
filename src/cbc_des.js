@@ -109,11 +109,16 @@ function CBC_DES(fileInput, keyInput, encode) {
 
   groupData = new Array(65);
   result = new Array([]);
+  result[0] = -1;
 
   for (i = 1;i <= data.length; i++)
     if (i % groupSize === 0) {
       groupData[groupSize] = data[i];
-      result.concat(des_encrypt(groupData, key, encode));
+      groupResult = des_encrypt(groupData, key, encode);
+      for (j = 1; j < groupResult.length; j++)
+        result.push(groupResult[j]);
+
+      console.log(result);
     }
     else {
       groupData[i % groupSize] = data[i];
@@ -121,8 +126,8 @@ function CBC_DES(fileInput, keyInput, encode) {
 
 
 
-  encode = false;
-  result = data;
+//  encode = false;
+//  result = data;
   if (!encode) {
     CBC(result);
     chRefine(result);
