@@ -83,10 +83,8 @@ function checkFile() {
     var lastname = filename.substring(pos,filename.length);  //此处文件后缀名也可用数组方式获得str.split(".")
 
     function fileInvalid(str) {
-      len = str.length;
-      if (len != 64) return true;
-      for (var i = 0; i < len; i++)
-        if ((str[i] != '0') && (str[i] != 1)) return true;
+      for (var i = 0; i < str.length; i++)
+        if ((str[i] != '0') && (str[i] != '1')) return true;
       return false;
     }
     if ((lastname.toLowerCase()!=".txt") || fileInvalid(fileContent)) {
@@ -191,7 +189,7 @@ function Work(encode) {
   //outputContent = fileContent;
   console.log(keyContent);
 
-  outputContent = DES(fileContent, keyContent, encode);
+  outputContent = CBC_DES(fileContent, keyContent, encode);
 
   alertbar = d3.select('#alertbar');
   alertblock = alertbar.append('div');
