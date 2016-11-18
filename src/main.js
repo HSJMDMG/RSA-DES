@@ -5,14 +5,14 @@ fileName = '';
 outputContent ='';
 keyContent = '';
 
-function checkKey() {
-  document.getElementById('alertbar').innerHTML="";
-  key = d3.select('#key').property('value');
+function checkKey1() {
+  document.getElementById('alertbar1').innerHTML="";
+  key = d3.select('#key1').property('value');
 
   //check for length
   keylen = 16;
   if (key.length > keylen) {
-    alertbar = d3.select('#alertbar');
+    alertbar = d3.select('#alertbar1');
     alertblock = alertbar.append('div');
     alertblock.attr('class', 'alert alert-danger');
     alertblock.append('button')
@@ -28,7 +28,7 @@ function checkKey() {
     return false;
   }
   if (key.length < keylen) {
-    alertbar = d3.select('#alertbar');
+    alertbar = d3.select('#alertbar1');
     alertblock = alertbar.append('div');
     alertblock.attr('class', 'alert alert-danger');
     alertblock.append('button')
@@ -54,7 +54,7 @@ function checkKey() {
   //check for valid character
   for (var i = 0; i < keylen; i++) {
     if (invalid(key[i])) {
-      alertbar = d3.select('#alertbar');
+      alertbar = d3.select('#alertbar1');
       alertblock = alertbar.append('div');
       alertblock.attr('class', 'alert alert-danger');
       alertblock.append('button')
@@ -70,14 +70,96 @@ function checkKey() {
     }
   }
 
-  d3.select('#key').attr('disabled','');
+  //d3.select('#key1').attr('disabled','');
+  rsa_key = RSA_encode(key);
 
+  d3.select('#rsakey1').property('value', rsa_key);
+  d3.select('#rsa1').classed('hidden', false);
   keyContent = key;
   return true;
 }
+function checkKey2() {
+  document.getElementById('alertbar2').innerHTML="";
+  key = d3.select('#key2').property('value');
 
-function checkFile() {
-    filename = d3.select('#inputFile').property('value');
+  //check for length
+  keylen = 16;
+  if (key.length > keylen) {
+    alertbar = d3.select('#alertbar2');
+    alertblock = alertbar.append('div');
+    alertblock.attr('class', 'alert alert-danger');
+    alertblock.append('button')
+              .attr('type', 'button')
+              .attr('class', 'close')
+              .attr('data-dismiss', 'alert')
+              .text('×');
+    alertblock.append('h4')
+              .text('提示！');
+    alertblock.append('p')
+              .text('密钥过长，超过16位，请重新输入！');
+
+    return false;
+  }
+  if (key.length < keylen) {
+    alertbar = d3.select('#alertbar2');
+    alertblock = alertbar.append('div');
+    alertblock.attr('class', 'alert alert-danger');
+    alertblock.append('button')
+              .attr('type', 'button')
+              .attr('class', 'close')
+              .attr('data-dismiss', 'alert')
+              .text('×');
+    alertblock.append('h4')
+              .text('提示！');
+    alertblock.append('p')
+              .text('密钥过短，少于16位，请重新输入！');
+
+    return false;
+  }
+
+  function invalid(ch) {
+    if ('0' <= ch && ch <= '9') return false;
+    if ('a' <= ch && ch <='z') return false;
+    if ('A' <= ch && ch <='Z') return false;
+    return true;
+  }
+
+  //check for valid character
+  for (var i = 0; i < keylen; i++) {
+    if (invalid(key[i])) {
+      alertbar = d3.select('#alertbar2');
+      alertblock = alertbar.append('div');
+      alertblock.attr('class', 'alert alert-danger');
+      alertblock.append('button')
+                .attr('type', 'button')
+                .attr('class', 'close')
+                .attr('data-dismiss', 'alert')
+                .text('×');
+      alertblock.append('h4')
+                .text('提示！');
+      alertblock.append('p')
+                .text('密钥中出现非法字符，请修改！');
+      return false;
+    }
+  }
+
+//  d3.select('#key2').attr('disabled','');
+
+  rsa_key = RSA_decode(key);
+
+  d3.select('#rsakey2').property('value', rsa_key);
+  d3.select('#rsa2').classed('hidden', false);
+
+
+  keyContent = rsa_key;
+  return true;
+}
+
+
+
+function checkFile(i) {
+
+    filename = d3.select('#inputFile' + i).property('value');
 
     var pos = filename.lastIndexOf(".");
     var lastname = filename.substring(pos,filename.length);  //此处文件后缀名也可用数组方式获得str.split(".")
@@ -88,7 +170,7 @@ function checkFile() {
       return false;
     }
     if ((lastname.toLowerCase()!=".txt") || fileInvalid(fileContent)) {
-      alertbar = d3.select('#alertbar');
+      alertbar = d3.select('#alertbar' + i);
       alertblock = alertbar.append('div');
       alertblock.attr('class', 'alert alert-danger');
       alertblock.append('button')
@@ -179,21 +261,15 @@ function saveFile() {
   doSave(outputContent, "text", fileName + '_output.txt');
 }
 
-function updateText(encode) {
-  if (encode) {
-    d3.select('#label2').text('密文');
-  }
+
+
+function Work(i) {
+  console.log(i);
+  if (i == 1)
+    valid = checkKey1() & checkFile(1);
   else {
-    d3.select('#label2').text('明文');
+    valid = checkKey2() & checkFile(2);
   }
-}
-
-
-
-function Work() {
-  valid = checkKey() & checkFile();
-  encode = document.getElementById("radio1").checked;
-  updateText(encode);
 
   if (!valid) return ;
   //console.log(fileContent);
@@ -202,7 +278,8 @@ function Work() {
   //outputContent = fileContent;
   console.log(keyContent);
 
-  alertbar = d3.select('#alertbar');
+  if (i == 1) encode = true; else encode = false;
+  alertbar = d3.select('#alertbar' + i);
   alertblock = alertbar.append('div');
 
   if ((!encode) && (fileContent.length % 64 !== 0)) {
@@ -222,6 +299,7 @@ function Work() {
     return;
 
   }
+  console.log(fileContent);
 
   outputContent = CBC_DES(fileContent, keyContent, encode);
 
@@ -245,8 +323,8 @@ function Work() {
 
   //d3.select('#key').attr('disabled',false);
   $("#key").removeAttr("disabled");
-  d3.select('#output').classed('hidden', false);
-  d3.select('#result').text(outputContent);
+  d3.select('#output' + i).classed('hidden', false);
+  d3.select('#result' + i).text(outputContent);
   //  saveFile();
 
 
