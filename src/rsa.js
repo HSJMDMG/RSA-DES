@@ -1,15 +1,14 @@
 var p, q, e, d, n, t;
 
 
-function exp(x, k, mod) {
-    if (k === 0) return 1;
-    if (k === 1) return x;
+function exp(x, k, md) {
+    if (k.equals(new BigInteger('0'))) return new BigInteger('1');
+    if (k.equals(new BigInteger('1'))) return x;
 
-    var ans = 0;
-    ans = exp(x, k / 2, mod);
-    ans = (ans * ans) % mod;
-    if (k & 1) ans = (ans * x) % mod;
-
+    var ans = new BigInteger('0');
+    ans = exp(x, k.divide(2), md);
+    ans = (ans.square()).mod(md);
+    if ((k.mod(2)).equals(new BigInteger('1'))) ans = (ans.multiply(x)).mod(md);
     return ans;
 }
 
@@ -165,15 +164,15 @@ function GenerateKeyPair() {
         // p : 64bit, q: 65 bit
         function checkPrime(n) {
             // Use Miller-Rabin Method
-            if (n.equals(1)) return false;
+            if (n.equals(new BigInteger('1'))) return false;
 
             sp = [3, 5, 7, 9, 11];
             for (i = 0; i < sp.length; i++)
-                if (n.mod(sp[i]) === 0) return false;
+                if (n.mod(new BigInteger(sp[i].toString())) === 0) return false;
 
-            m = n.substract(1);
+            m = n.subtract(new BigInteger('1'));
             k = 0;
-            while ((m.mod(2)) === 0) {
+            while ((m.mod(new BigInteger('2'))) === 0) {
                 k++;
                 m = m.shiftRight(1);
             }
@@ -182,14 +181,16 @@ function GenerateKeyPair() {
             for (i = 0; i < times; i++) {
                 // a in [2, n - 2]
                 a = (Math.floor(n * Math.random()) + 1) % (n - 1) + 1;
+                a = new BigInteger(a.toString());
+
                 b = exp(a, m, n);
 
-                if (b === 1 || b == (n - 1)) continue;
+                if (b.equals(new BigInteger('1')) || b.equals(new BigInteger((n-1).toString()))) continue;
                 pass = false;
                 for (var j = 0; j < k; j++) {
-                    b = (b * b) % n;
+                    b = exp(b, 2, n);
                     // if (b === 1) return false;
-                    if (b == (n - 1)) {
+                    if (b.equals(new BigInteger((n-1).toString()))) {
                         pass = true;
                         break;
                     }
@@ -214,16 +215,16 @@ function GenerateKeyPair() {
                 console.log(tp.toString());
                 bit = (Math.random() - 0.5 > 0) ? 1 : 0;
                 tp = tp.shiftLeft(1);
-                console.log(tp.toString());
+              //  console.log(tp.toString());
                 tp = tp.add(new BigInteger(bit.toString()));
             }
           //  console.log(tp);
           tp = tp.shiftLeft(1);
-          tp = tp.add(bit.toString());
-          //  console.log(tp);
+          tp = tp.add(new BigInteger(bit.toString()));
+          console.log(tp.toString());
         }
 
-    //    console.log(tp.toString());
+        console.log(tp.toString());
 
 /*
         while (!checkPrime(tq)) {
