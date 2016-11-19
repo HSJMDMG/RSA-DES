@@ -34,11 +34,17 @@
                         </ul>
                     </div>
                     <div class="col-md-10">
-                        <h3>RSA-DES加解密</h3>
-                        <h5>
-                        <span>密钥为16位十六进制数，采用RSA算法加密密钥进行传输</span> </br>
-						<span>采用DES算法对得到的明文/密文进行加解密，解密之前先使用RSA对密钥进行解密。</span>
-					</h5>
+                        <div>
+                            <label>密钥对产生：</label>
+                            <button type="button" class="btn btn-default btn-xs" onclick="GenerateKeyPair()"> 生成密钥对</button>
+                            <span class="help-block">点击生成密钥对，为了展示方便，此处一并显示大素数p,q,以及密钥d，实际中p，q，和d应当保密</span>
+                            <div class='bg-info hidden' id='rsa-output'>
+                                <label>密钥对：</label>
+                                <p id="keypair"></p>
+                                <label>大素数p,q,密钥d：(保密)</label>
+                                <p id="secret"></p>
+                            </div>
+                        </div>
 
                         <div class="col-md-5">
 
@@ -52,7 +58,6 @@
 
                                     <div id='alertbar1'>
                                     </div>
-
 
                                     <div>
                                         <label>密钥：</label>
@@ -153,6 +158,9 @@
         <script src="../libs/jquery.min.js"></script>
         <script src="../libs/bootstrap.min.js"></script>
         <script src="../libs/d3.min.js"></script>
+        <script src="../libs/jsbn.js"></script>
+        <script src="../libs/jsbn2.js"></script>
+
 
         <script src="../src/rsa.js"></script>
         <script src="../src/des_encrypt.js"></script>
