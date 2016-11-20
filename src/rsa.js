@@ -1,38 +1,25 @@
 var p, q, e, d, n, t;
 
+var zero, one, two;
+zero = new BigInteger('0');
+one = new BigInteger('1');
+two = new BigInteger('2');
 
 function exp(x, k, md) {
+    //  console.log('ReachExp')
     if (k.equals(new BigInteger('0'))) return new BigInteger('1');
+    //  console.log('ReachExp')
     if (k.equals(new BigInteger('1'))) return x;
+    //  console.log('ReachExp')
 
     var ans = new BigInteger('0');
-    ans = exp(x, k.divide(2), md);
+    //  console.log('ReachExp')
+    ans = exp(x, k.divide(new BigInteger('2')), md);
+    //    console.log('ReachExp')
     ans = (ans.square()).mod(md);
-    if ((k.mod(2)).equals(new BigInteger('1'))) ans = (ans.multiply(x)).mod(md);
+    if ((k.mod(two)).equals(one)) ans = (ans.multiply(x)).mod(md);
+    //  console.log(x.toString(), k.toString(), md.toString());
     return ans;
-}
-
-function ExtendEuclid(a, b, parameter) {
-    if (b === 0) {
-        parameter.x = 1;
-        parameter.y = 0;
-        return a;
-    }
-    var tmp;
-    tmp = parameter.x;
-    parameter.x = parameter.y;
-    parameter.y = tmp;
-
-
-    var gcd = ExtendEuclid(b, a % b, parameter);
-
-    tmp = parameter.x;
-    parameter.x = parameter.y;
-    parameter.y = tmp;
-
-
-    parameter.y -= parseInt((a / b)) * parameter.x;
-    return gcd;
 }
 
 
@@ -98,13 +85,13 @@ function GenerateKeyPair_smallnum_bak() {
         while (!checkPrime(tp)) {
             tp = 1;
             for (i = 0; i < lenp - 2; i++) {
-              //  console.log(tp);
+                //  console.log(tp);
                 bit = (Math.random() - 0.5 > 0) ? 1 : 0;
                 tp = (tp << 1) + bit;
             }
-          //  console.log(tp);
+            //  console.log(tp);
             tp = (tp << 1) + 1;
-          //  console.log(tp);
+            //  console.log(tp);
         }
 
 
@@ -159,38 +146,69 @@ function GenerateKeyPair() {
 
     }
 
+    function ExtendEuclid(a, b, parameter) {
+        if (b.equals(zero)) {
+            parameter.x = one.clone();
+            parameter.y = zero.clone();
+            return a.clone();
+        }
+
+        /*
+        x = x + y;
+        y = x -y;
+        x = x -y
+        */
+        var tmp;
+        tmp = (parameter.x).clone();
+        parameter.x = (parameter.y).clone();
+        parameter.y = tmp.clone();
+
+
+        var gcd = ExtendEuclid(b, a.mod(b), parameter);
+
+        tmp = (parameter.x).clone();
+        parameter.x = (parameter.y).clone();
+        parameter.y = tmp.clone();
+
+
+        parameter.y = parameter.y.subtract((a.divide(b)).multiply(parameter.x));
+        return gcd;
+    }
 
     function GeneratePrime() {
         // p : 64bit, q: 65 bit
         function checkPrime(n) {
             // Use Miller-Rabin Method
-            if (n.equals(new BigInteger('1'))) return false;
+            if (n.equals(one)) return false;
 
-            sp = [3, 5, 7, 9, 11];
+            sp = [3, 5, 7];
             for (i = 0; i < sp.length; i++)
-                if (n.mod(new BigInteger(sp[i].toString())) === 0) return false;
+                if ((n.mod(new BigInteger(sp[i].toString()))).equals(zero)) return false;
 
-            m = n.subtract(new BigInteger('1'));
+            m = n.subtract(one);
             k = 0;
-            while ((m.mod(new BigInteger('2'))) === 0) {
+            while ((m.mod(two)).equals(zero)) {
                 k++;
                 m = m.shiftRight(1);
             }
-
+            //  console.log(k);
+            //  return true;
             times = 5;
             for (i = 0; i < times; i++) {
                 // a in [2, n - 2]
+                //    console.log(i);
                 a = (Math.floor(n * Math.random()) + 1) % (n - 1) + 1;
                 a = new BigInteger(a.toString());
-
+                //  console.log('GetA');
                 b = exp(a, m, n);
-
-                if (b.equals(new BigInteger('1')) || b.equals(new BigInteger((n-1).toString()))) continue;
+                //    console.log('GetB');
+                if (b.equals(one) || b.equals(new BigInteger((n - 1).toString())))
+                    continue;
                 pass = false;
                 for (var j = 0; j < k; j++) {
-                    b = exp(b, 2, n);
+                    b = exp(b, two, n);
                     // if (b === 1) return false;
-                    if (b.equals(new BigInteger((n-1).toString()))) {
+                    if (b.equals(new BigInteger((n - 1).toString()))) {
                         pass = true;
                         break;
                     }
@@ -208,25 +226,44 @@ function GenerateKeyPair() {
 
         lenp = 64;
         lenq = 65;
-
+        //cnt = 0;
         while (!checkPrime(tp)) {
-
+            //  console.log(cnt);
+            //  cnt++;
+            tp = new BigInteger('1');
             for (i = 0; i < lenp - 2; i++) {
-                console.log(tp.toString());
+                //  console.log(tp.toString());
                 bit = (Math.random() - 0.5 > 0) ? 1 : 0;
                 tp = tp.shiftLeft(1);
-              //  console.log(tp.toString());
+                //  console.log(tp.toString());
                 tp = tp.add(new BigInteger(bit.toString()));
             }
-          //  console.log(tp);
-          tp = tp.shiftLeft(1);
-          tp = tp.add(new BigInteger(bit.toString()));
-          console.log(tp.toString());
+            //  console.log(tp);
+            tp = tp.shiftLeft(1);
+            tp = tp.add(new BigInteger(bit.toString()));
+            //  console.log(tp.toString());
         }
 
-        console.log(tp.toString());
 
-/*
+        while (!checkPrime(tq)) {
+            //  console.log(cnt);
+            //  cnt++;
+            tq = new BigInteger('1');
+            for (i = 0; i < lenq - 2; i++) {
+                //  console.log(tp.toString());
+                bit = (Math.random() - 0.5 > 0) ? 1 : 0;
+                tq = tq.shiftLeft(1);
+                //  console.log(tp.toString());
+                tq = tq.add(new BigInteger(bit.toString()));
+            }
+            //  console.log(tp);
+            tq = tq.shiftLeft(1);
+            tq = tq.add(new BigInteger(bit.toString()));
+            //  console.log(tp.toString());
+        }
+
+
+        /*
         while (!checkPrime(tq)) {
             tq = 1;
             for (i = 0; i < lenq - 2; i++) {
@@ -236,30 +273,49 @@ function GenerateKeyPair() {
             tq = (tq << 1) + 1;
         }
 
+        */
         p = tp;
         q = tq;
-        console.log(p, q);
+        console.log(p.toString(), q.toString());
 
-*/
 
     }
 
+    function BigIntRandom(n) {
+        //[0,n]
+        len = 66;
+        //  console.log(len)
+        ans = new BigInteger('0');
+        for (var i = 0; i < len; i++) {
+            //console.log(i);
+            bit = (Math.random() - 0.5 > 0) ? 1 : 0;
+            ans = ans.shiftLeft(1);
+            //  console.log(tp.toString());
+            ans = ans.add(new BigInteger(bit.toString()));
+        }
+        //    console.log(ans.mod(n.add(one)).toString());
+        return ans.mod(n.add(one));
+    }
 
     GeneratePrime();
-    n = p * q;
-    phin = (p - 1) * (q - 1);
-    d = parseInt(Math.random() * n);
+
+    n = p.multiply(q);
+    phin = (p.subtract(one)).multiply((q.subtract(one)));
+    d = BigIntRandom(phin.subtract(one.add(two))).add(two);
 
     parameter = {
-        x: 0,
-        y: 0
+        x: new BigInteger('0'),
+        y: new BigInteger('1')
     };
-    while (d === 0 || ExtendEuclid(d, phin, parameter) != 1) {
-        d = parseInt(Math.random() * n);
+    cnt = 0;
+    while (!(ExtendEuclid(d, phin, parameter).equals(one))) {
+        cnt++;
+        console.log(cnt);
+        d = BigtIntRandom(phin.subtract(one.add(two))).add(two);
     }
 
-    e = (parameter.x % phin + phin) % phin;
-    console.log(d, e, phin);
+    e = ((parameter.x.mod(phin)).add(phin)).mod(phin);
+    console.log(d.toString(), e.toString(), phin.toString());
 
     show_ne();
 }
